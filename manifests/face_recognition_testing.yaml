@@ -9,7 +9,78 @@ spec:
       targetPort: 50051
   selector:
     app: face-recog
-  clusterIP: None
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: face-recognition-pvc-unknown
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-storage
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: face-recognition-pvc-known
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-storage
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: face-recognition-pv-unknown
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
+  storageClassName: local-storage
+  local:
+    path: /unknown_people
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: local-pvc
+              operator: In
+              values:
+                - "true"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: face-recognition-pv-known
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
+  storageClassName: local-storage
+  local:
+    path: /known_people
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: local-pvc
+              operator: In
+              values:
+                - "true"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -27,8 +98,7 @@ spec:
     spec:
       containers:
         - name: face-recog
-          image: skarlso/kube-face-recog
-          imagePullPolicy: Always
+          image: ghcr.io/kube-project/face-recognition-service:v0.0.1
           ports:
             - containerPort: 50051
               hostPort: 50051
@@ -41,12 +111,19 @@ spec:
               mountPath: /known_people
             - name: unknown-people-storage
               mountPath: /unknown_people
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "1024Mi"
+            requests:
+              cpu: "500m"
+              memory: "1024Mi"
       volumes:
         - name: known-people-storage
           hostPath:
-            path: /etc/known_people
+            path: /known_people
             type: Directory
         - name: unknown-people-storage
           hostPath:
-            path: /etc/unknown_people
+            path: /unknown_people
             type: Directory

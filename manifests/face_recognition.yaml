@@ -27,8 +27,7 @@ spec:
     spec:
       containers:
       - name: face-recog
-        image: skarlso/kube-face-recog:1.0.1
-        imagePullPolicy: Always
+        image: ghcr.io/kube-project/face-recognition-service:v0.0.1
         ports:
         - containerPort: 50051
           hostPort: 50051
@@ -41,10 +40,17 @@ spec:
           mountPath: /known_people
         - name: unknown-people-storage
           mountPath: /unknown_people
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "1024Mi"
+          requests:
+            cpu: "500m"
+            memory: "1024Mi"
       volumes:
       - name: known-people-storage
         hostPath:
-          path: /known_people 
+          path: /known_people
       - name: unknown-people-storage
         hostPath:
-          path: /unknown_people 
+          path: /unknown_people
