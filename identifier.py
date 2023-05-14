@@ -10,6 +10,7 @@ import grpc
 import face_pb2
 import face_pb2_grpc
 import logging
+import sys
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
