@@ -9,7 +9,6 @@ spec:
     targetPort: 50051
   selector:
     app: face-recog
-  clusterIP: None
 ---
 apiVersion: apps/v1
 kind: Deployment
