@@ -19,10 +19,10 @@ class Identifer(face_pb2_grpc.IdentifyServicer):
     UnknownEncoding = None
 
     def Identify(self, request, context):
-        logging.info('got request to process with image path {s}'.format(request.image_path))
+        logging.info("got request to process with image path %s" % request.image_path))
         path = request.image_path
         image_name = self.identify(path)
-        logging.info('got response image name {s}'.format(image_name))
+        logging.info("got response image name %s" % image_name))
         return face_pb2.IdentifyResponse(image_name=image_name)
 
     def image_files_in_folder(self, folder):
