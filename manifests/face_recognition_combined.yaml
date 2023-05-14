@@ -98,7 +98,7 @@ spec:
     spec:
       containers:
         - name: face-recog
-          image: ghcr.io/kube-project/face-recognition-service:v0.0.1
+          image: ghcr.io/kube-project/face-recognition-service:v0.0.2
           ports:
             - containerPort: 50051
               hostPort: 50051
