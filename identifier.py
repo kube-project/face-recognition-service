@@ -12,9 +12,8 @@ import face_pb2_grpc
 import logging
 import sys
 
-_ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
-class Identifer(face_pb2_grpc.IdentifyServicer):
+class Identifier(face_pb2_grpc.IdentifyServicer):
     # TODO: this should probably be passed in to the pools.
     UnknownEncoding = None
 
@@ -34,18 +33,32 @@ class Identifer(face_pb2_grpc.IdentifyServicer):
         results = face_recognition.compare_faces([known_encoding], self.UnknownEncoding)
         if results[0]:
             return basename(image)
+
         return 'not_found'
 
     def identify(self, path_to_unknown):
         if len(path_to_unknown) < 1:
             return "not_found"
+
         logging.info('checking image: %s', path_to_unknown)
+
+        if not os.path.isfile(path_to_unknown):
+            logging.error('image with path %s not found', path_to_unknown)
+            return "not_found"
+
         known_people = os.getenv('KNOWN_PEOPLE', 'known_people')
         logging.info('known people images location is: %s', known_people)
         images = self.image_files_in_folder(known_people)
         unknown_image = face_recognition.load_image_file(path_to_unknown)
-        self.UnknownEncoding = face_recognition.face_encodings(unknown_image)[0]
+
+        unknown_image_encodings = face_recognition.face_encodings(unknown_image)
+        if len(unknown_image_encodings) == 0:
+            logging.error('no faces found in image')
+            return 'not_found'
+
+        self.UnknownEncoding = unknown_image_encodings[0]
         results = []
+
         with Pool(10) as pool:
             results += pool.map(self.process_image, images)
 
@@ -70,16 +83,13 @@ class HealthChecker(face_pb2_grpc.HealthCheckServicer):
 
 def serve():
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+    logging.info('face recognition service starting...')
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    face_pb2_grpc.add_IdentifyServicer_to_server(Identifer(), server)
+    face_pb2_grpc.add_IdentifyServicer_to_server(Identifier(), server)
     face_pb2_grpc.add_HealthCheckServicer_to_server(HealthChecker(), server)
     server.add_insecure_port('[::]:50051')
     server.start()
-    try:
-        while True:
-            time.sleep(_ONE_DAY_IN_SECONDS)
-    except KeyboardInterrupt:
-        server.stop(0)
+    server.wait_for_termination()
 
 
 if __name__ == "__main__":
