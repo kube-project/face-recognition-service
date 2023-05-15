@@ -19,10 +19,10 @@ class Identifer(face_pb2_grpc.IdentifyServicer):
     UnknownEncoding = None
 
     def Identify(self, request, context):
-        logging.info("got request to process with image path %s" % request.image_path)
+        logging.info('got request to process with image path %s', request.image_path)
         path = request.image_path
         image_name = self.identify(path)
-        logging.info("got response image name %s" % image_name)
+        logging.info('got response image name %s', image_name)
         return face_pb2.IdentifyResponse(image_name=image_name)
 
     def image_files_in_folder(self, folder):
@@ -39,9 +39,9 @@ class Identifer(face_pb2_grpc.IdentifyServicer):
     def identify(self, path_to_unknown):
         if len(path_to_unknown) < 1:
             return "not_found"
-        logger.info("checking image: %s" % path_to_unknown)
+        logger.info('checking image: %s', path_to_unknown)
         known_people = os.getenv('KNOWN_PEOPLE', 'known_people')
-        logger.info("known people images location is: %s" % known_people)
+        logger.info('known people images location is: %s', known_people)
         images = self.image_files_in_folder(known_people)
         unknown_image = face_recognition.load_image_file(path_to_unknown)
         self.UnknownEncoding = face_recognition.face_encodings(unknown_image)[0]
